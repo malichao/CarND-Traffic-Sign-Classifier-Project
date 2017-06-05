@@ -1,5 +1,9 @@
 
-# Project: Traffic Sign Recognition Classifier
+# Self-Driving Car Engineer Nanodegree
+
+## Project: Build a Traffic Sign Recognition Classifier
+
+---
 ## Step 0: Load The Data
 
 
@@ -37,12 +41,11 @@ print (X_valid_orig[0].shape)
 
 ## Step 1: Dataset Summary & Exploration
 
-The pickled data is a dictionary with 4 key/value pairs:
-
-- `'features'` is a 4D array containing raw pixel data of the traffic sign images, (num examples, width, height, channels).
-- `'labels'` is a 1D array containing the label/class id of the traffic sign. The file `signnames.csv` contains id -> name mappings for each id.
-- `'sizes'` is a list containing tuples, (width, height) representing the original width and height the image.
-- `'coords'` is a list containing tuples, (x1, y1, x2, y2) representing coordinates of a bounding box around the sign in the image. **THESE COORDINATES ASSUME THE ORIGINAL IMAGE. THE PICKLED DATA CONTAINS RESIZED VERSIONS (32 by 32) OF THESE IMAGES**
+The size of training set is 34799
+The size of the validation set is 4410
+The size of test set is 12630
+The shape of a traffic sign image is (32, 32, 3)
+The number of unique classes/labels in the data set is 43
 
 ### Provide a Basic Summary of the Data Set Using Python, Numpy and/or Pandas
 
@@ -55,22 +58,27 @@ n_train = X_train_orig.shape[0]
 n_validation = X_valid_orig.shape[0]
 n_test = X_test_orig.shape[0]
 
-image_shape = (X_train_orig.shape[1],X_train_orig.shape[2])
+image_shape = (X_train_orig.shape[1:4])
 n_classes = np.unique(y_train_orig).size
 
 print("Number of training examples =", n_train)
+print("Number of validation examples =", n_validation)
 print("Number of testing examples =", n_test)
 print("Image data shape =", image_shape)
 print("Number of classes =", n_classes)
 ```
 
     Number of training examples = 34799
+    Number of validation examples = 4410
     Number of testing examples = 12630
-    Image data shape = (32, 32)
+    Image data shape = (32, 32, 3)
     Number of classes = 43
 
 
 ### Include an exploratory visualization of the dataset
+
+Here is an exploratory visualization of the data set.
+
 
 ```python
 ### Data exploration visualization code goes here.
@@ -101,17 +109,20 @@ plt.show()
 ```
 
 
-![png](docs/output_8_0.png)
+![png](docs/output_7_0.png)
 
 
 
-![png](docs/output_8_1.png)
+![png](docs/output_7_1.png)
 
 
 ----
 
 ## Step 2: Design and Test a Model Architecture
-### Pre-process the Data Set (normalization, grayscale, etc.)
+### Pre-process the Data Set 
+The image data is normalized so that the data has mean zero and equal variance. The following equation is used to normalize the images   
+`(pixel - 128)/ 128`
+
 
 ```python
 ### Preprocessing
@@ -132,6 +143,7 @@ def preprocess(x_train, y_train, x_test, y_test):
     x_train = normalize(x_train)
     x_test = normalize(x_test)
     
+    
     # One hot encode labels
     lb = label_binarizer(y_train)
     y_train = lb.transform(y_train)
@@ -147,9 +159,41 @@ X_train, y_train, X_test, y_test, X_val, y_val = \
 preprocess(X_train_orig, y_train_orig, \
            X_test_orig, y_test_orig)
 
+print("X_train \t y_train \t X_val \t\t y_val \t\t X_test \t y_test")
+print(X_train_orig.shape,y_train.shape,\
+      X_valid_orig.shape,y_valid_orig.shape,\
+      X_test_orig.shape, y_test_orig.shape)
+print(X_train.shape,y_train.shape,\
+      X_val.shape,y_val.shape,\
+      X_test.shape, y_test.shape)
 ```
 
+    X_train 	 y_train 	 X_val 		 y_val 		 X_test 	 y_test
+    (34799, 32, 32, 3) (23315, 43) (4410, 32, 32, 3) (4410,) (12630, 32, 32, 3) (12630,)
+    (23315, 32, 32, 3) (23315, 43) (11484, 32, 32, 3) (11484, 43) (12630, 32, 32, 3) (12630, 43)
+
+
 ### Model Architecture
+
+My final model consisted of the following layers:
+
+| Layer         		|     Description	        					| 
+|:---------------------:|:---------------------------------------------:| 
+| Input         		| 32x32x3 RGB image   							| 
+| Convolution 5x5     	| 3x3 stride, VALID padding, outputs 28x28x6 	|
+| RELU					|												|
+| Dropout				| 50%											|
+| Max pooling	      	| 2x2 stride,  outputs 14x14x6 					|
+| Convolution 5x5     	| 3x3 stride, VALID padding, outputs 10x10x16 	|
+| RELU					|												|
+| Dropout				| 50%											|
+| Max pooling	      	| 2x2 stride,  outputs 5x15x6 					|
+| Flatten				| outputs 400  									|
+| Fully connected		| outputs 120  									|
+| RELU					|												|
+| Dropout				| 50%											|
+| Fully connected		| outputs 43  									|
+| Softmax				|             									|
 
 
 ```python
@@ -232,22 +276,24 @@ def next_batch(x_data, y_data, batch_size, step):
     batch_y = y_data[batch_start:batch_start + batch_size]
     return batch_x, batch_y
 
-def eval_data(x_data, y_data):
-    steps_per_epoch = len(x_data) // BATCH_SIZE
-    num_examples = steps_per_epoch * BATCH_SIZE
-    total_acc, total_loss = 0, 0
-    for step in range(steps_per_epoch):
-        batch_x, batch_y = next_batch(x_data, y_data, BATCH_SIZE, step)
-        loss, acc = sess.run([loss_op, accuracy_op], feed_dict={x: batch_x, y: batch_y, keep_prob: 1.0})
-        total_acc += (acc * batch_x.shape[0])
-        total_loss += (loss * batch_x.shape[0])
-    return total_loss/num_examples, total_acc/num_examples
+def eval_data(X_data, y_data):
+    num_examples = len(X_data)
+    total_accuracy = 0
+    total_loss = 0
+    sess = tf.get_default_session()
+    for offset in range(0, num_examples, BATCH_SIZE):
+        batch_x, batch_y = X_data[offset:offset+BATCH_SIZE], y_data[offset:offset+BATCH_SIZE]
+        loss,accuracy = sess.run([loss_op,accuracy_op], \
+                            feed_dict={x: batch_x, y: batch_y, keep_prob: 1.0})
+        total_accuracy += (accuracy * len(batch_x))
+        total_loss += (loss * len(batch_x))
+    return total_loss / num_examples, total_accuracy / num_examples
 ```
 
 ### Train, Validate and Test the Model
 
-A validation set can be used to assess how well the model is performing. A low accuracy on the training and validation
-sets imply underfitting. A high accuracy on the training set but low accuracy on the validation set implies overfitting.
+validation set accuracy of 0.961
+test set accuracy of 0.895
 
 
 ```python
@@ -279,18 +325,18 @@ with tf.Session() as sess:
     print("Testing model loss = {:.3f} accuracy = {:.3f}".format(test_loss, test_acc))
 ```
 
-    EPOCH 1 keep_prob 1.00 loss = 1.877 accuracy = 0.413
-    EPOCH 2 keep_prob 0.95 loss = 0.897 accuracy = 0.724
-    EPOCH 3 keep_prob 0.90 loss = 0.559 accuracy = 0.844
-    EPOCH 4 keep_prob 0.85 loss = 0.428 accuracy = 0.896
-    EPOCH 5 keep_prob 0.80 loss = 0.378 accuracy = 0.920
-    EPOCH 6 keep_prob 0.75 loss = 0.356 accuracy = 0.934
-    EPOCH 7 keep_prob 0.70 loss = 0.373 accuracy = 0.936
-    EPOCH 8 keep_prob 0.65 loss = 0.400 accuracy = 0.934
-    EPOCH 9 keep_prob 0.60 loss = 0.459 accuracy = 0.937
-    EPOCH 10 keep_prob 0.55 loss = 0.530 accuracy = 0.930
+    EPOCH 1 keep_prob 1.00 loss = 1.451 accuracy = 0.553
+    EPOCH 2 keep_prob 0.95 loss = 0.527 accuracy = 0.866
+    EPOCH 3 keep_prob 0.90 loss = 0.307 accuracy = 0.924
+    EPOCH 4 keep_prob 0.85 loss = 0.230 accuracy = 0.949
+    EPOCH 5 keep_prob 0.80 loss = 0.194 accuracy = 0.962
+    EPOCH 6 keep_prob 0.75 loss = 0.213 accuracy = 0.965
+    EPOCH 7 keep_prob 0.70 loss = 0.188 accuracy = 0.966
+    EPOCH 8 keep_prob 0.65 loss = 0.238 accuracy = 0.969
+    EPOCH 9 keep_prob 0.60 loss = 0.280 accuracy = 0.970
+    EPOCH 10 keep_prob 0.55 loss = 0.390 accuracy = 0.961
     
-    Testing model loss = 0.720 accuracy = 0.856
+    Testing model loss = 0.565 accuracy = 0.895
 
 
 
@@ -303,13 +349,11 @@ with tf.Session() as sess:
     print("Testing model loss = {:.3f} accuracy = {:.3f}".format(test_loss, test_acc))
 ```
 
-    
-    Testing model loss = 0.734 accuracy = 0.859
-
-
 ---
 
 ## Step 3: Test a Model on New Images
+
+I also tested the model on [official GTSRB test set](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset#Downloads), which more than 10,000 pictures. I only selected the first 1000 pictures as it takes a long time to run through all the data. The prediction accuracy is 0.864.
 
 ### Load and Output the Images
 
@@ -358,7 +402,7 @@ plt.show()
 
 
 
-![png](docs/output_23_1.png)
+![png](docs/output_20_1.png)
 
 
 ### Predict the Sign Type for Each Image
@@ -380,7 +424,7 @@ with tf.Session() as sess:
     predicted_classes = sess.run(predicions, feed_dict={x: signs_norm, keep_prob: 1.0})
 
 print("Tested against ",len(predicted_classes),"files")
-plt.figure(figsize=(image_shape[0]/3,image_shape[1]/3))
+plt.figure(figsize=(image_shape[0]/2,image_shape[1]/2))
 for i in range(0,20):
     plt.subplot(7, 3, i+1)
     plt.title(sign_names[predicted_classes[i]])
@@ -393,7 +437,7 @@ plt.show()
 
 
 
-![png](docs/output_25_1.png)
+![png](docs/output_22_1.png)
 
 
 ### Analyze Performance
@@ -446,7 +490,8 @@ print("Accuracy: ",1.0* correct_predicts/file_num)
     Accuracy:  0.864
 
 
-### Output Top 5 Softmax Probabilities For Each Image Found on the Web
+### Output Top 5 Softmax Probabilities For Each Image
+
 
 ```python
 ##### Print out the top five softmax probabilities for the predictions on the German traffic sign images found on the web. 
@@ -471,12 +516,14 @@ for i in range(0,10):
 ```
 
 
-![png](docs/output_30_0.png) ![png](docs/output_30_1.png)
-![png](docs/output_30_2.png) ![png](docs/output_30_3.png)
-![png](docs/output_30_4.png) ![png](docs/output_30_5.png)
-![png](docs/output_30_6.png) ![png](docs/output_30_7.png)
-![png](docs/output_30_8.png)
+![png](docs/output_26_0.png)
+![png](docs/output_26_1.png)
+![png](docs/output_26_2.png)
+![png](docs/output_26_3.png)
+![png](docs/output_26_4.png)
+![png](docs/output_26_5.png)
+![png](docs/output_26_6.png)
+![png](docs/output_26_7.png)
+![png](docs/output_26_8.png)
+![png](docs/output_26_9.png)
 
-
-
-![png](docs/output_30_9.png)
