@@ -471,38 +471,10 @@ for i in range(0,10):
 ```
 
 
-![png](docs/output_30_0.png)
-
-
-
-![png](docs/output_30_1.png)
-
-
-
-![png](docs/output_30_2.png)
-
-
-
-![png](docs/output_30_3.png)
-
-
-
-![png](docs/output_30_4.png)
-
-
-
-![png](docs/output_30_5.png)
-
-
-
-![png](docs/output_30_6.png)
-
-
-
-![png](docs/output_30_7.png)
-
-
-
+![png](docs/output_30_0.png) ![png](docs/output_30_1.png)
+![png](docs/output_30_2.png) ![png](docs/output_30_3.png)
+![png](docs/output_30_4.png) ![png](docs/output_30_5.png)
+![png](docs/output_30_6.png) ![png](docs/output_30_7.png)
 ![png](docs/output_30_8.png)
 
 
