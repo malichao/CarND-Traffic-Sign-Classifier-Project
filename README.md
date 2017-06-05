@@ -297,7 +297,7 @@ test set accuracy of 0.895
 
 
 ```python
-EPOCHS = 10
+EPOCHS = 15
 BATCH_SIZE = 50
 
 prob_step=(1.0-0.5)/EPOCHS
@@ -325,18 +325,23 @@ with tf.Session() as sess:
     print("Testing model loss = {:.3f} accuracy = {:.3f}".format(test_loss, test_acc))
 ```
 
-    EPOCH 1 keep_prob 1.00 loss = 1.451 accuracy = 0.553
-    EPOCH 2 keep_prob 0.95 loss = 0.527 accuracy = 0.866
-    EPOCH 3 keep_prob 0.90 loss = 0.307 accuracy = 0.924
-    EPOCH 4 keep_prob 0.85 loss = 0.230 accuracy = 0.949
-    EPOCH 5 keep_prob 0.80 loss = 0.194 accuracy = 0.962
-    EPOCH 6 keep_prob 0.75 loss = 0.213 accuracy = 0.965
-    EPOCH 7 keep_prob 0.70 loss = 0.188 accuracy = 0.966
-    EPOCH 8 keep_prob 0.65 loss = 0.238 accuracy = 0.969
-    EPOCH 9 keep_prob 0.60 loss = 0.280 accuracy = 0.970
-    EPOCH 10 keep_prob 0.55 loss = 0.390 accuracy = 0.961
+    EPOCH 1 keep_prob 1.00 loss = 1.568 accuracy = 0.495
+    EPOCH 2 keep_prob 0.97 loss = 0.719 accuracy = 0.783
+    EPOCH 3 keep_prob 0.93 loss = 0.404 accuracy = 0.889
+    EPOCH 4 keep_prob 0.90 loss = 0.273 accuracy = 0.933
+    EPOCH 5 keep_prob 0.87 loss = 0.216 accuracy = 0.948
+    EPOCH 6 keep_prob 0.83 loss = 0.194 accuracy = 0.955
+    EPOCH 7 keep_prob 0.80 loss = 0.170 accuracy = 0.966
+    EPOCH 8 keep_prob 0.77 loss = 0.182 accuracy = 0.963
+    EPOCH 9 keep_prob 0.73 loss = 0.180 accuracy = 0.971
+    EPOCH 10 keep_prob 0.70 loss = 0.195 accuracy = 0.974
+    EPOCH 11 keep_prob 0.67 loss = 0.219 accuracy = 0.971
+    EPOCH 12 keep_prob 0.63 loss = 0.226 accuracy = 0.968
+    EPOCH 13 keep_prob 0.60 loss = 0.277 accuracy = 0.973
+    EPOCH 14 keep_prob 0.57 loss = 0.273 accuracy = 0.971
+    EPOCH 15 keep_prob 0.53 loss = 0.344 accuracy = 0.968
     
-    Testing model loss = 0.565 accuracy = 0.895
+    Testing model loss = 0.529 accuracy = 0.890
 
 
 
@@ -366,39 +371,30 @@ import matplotlib.image as mpimg
 import PIL
 from PIL import Image
 
-path = "GTSRB/Final_Test/Images/"
-files = [file for file in os.listdir(path) if file.endswith('.ppm')]
-files = sorted(files)
-files = files[0:1000]
+path = "new-data-set/"
+files = [file for file in os.listdir(path) if file.endswith('.png')]
 signs = np.empty((0,32,32,3))
 file_num=len(files)
 
-for file in files:
-    img = Image.open(path + file)
-    img_resized = img.resize((32,32), PIL.Image.ANTIALIAS)
-    img_array=np.array(img_resized.getdata()).\
-                reshape(img_resized.size[0], img_resized.size[1], 3)
-    signs = np.append(signs, [img_array], axis=0)
-
-print("Loaded ",file_num, "files")
-print("Showing the first 20 pictures")
-
-
-plt.figure(figsize=(image_shape[0]/3,image_shape[1]/3))
+plt.figure(figsize=(12,12))
 image_list=[]
-for i in range(0,20) :
+for i in range(0,file_num):
     img = Image.open(path + files[i])
     img_resized = img.resize((32,32), PIL.Image.ANTIALIAS)
     image_list.append(img_resized)
-    plt.subplot(4, 5, i+1)
+    img_array=np.array(img_resized.getdata()).\
+                reshape(img_resized.size[0], img_resized.size[1], 3)
+    signs = np.append(signs, [img_array], axis=0)
+    plt.subplot(1, 6, i+1)
     plt.title(files[i])
     plt.imshow(img_resized)
     plt.axis('off')
+    
+print("Loaded ",file_num, "files")
 plt.show()
 ```
 
-    Loaded  1000 files
-    Showing the first 20 pictures
+    Loaded  6 files
 
 
 
@@ -425,7 +421,7 @@ with tf.Session() as sess:
 
 print("Tested against ",len(predicted_classes),"files")
 plt.figure(figsize=(image_shape[0]/2,image_shape[1]/2))
-for i in range(0,20):
+for i in range(0,file_num):
     plt.subplot(7, 3, i+1)
     plt.title(sign_names[predicted_classes[i]])
     plt.axis('off')
@@ -433,7 +429,7 @@ for i in range(0,20):
 plt.show()
 ```
 
-    Tested against  1000 files
+    Tested against  6 files
 
 
 
@@ -446,16 +442,10 @@ plt.show()
 ```python
 ### Calculate the accuracy for these 5 new images. 
 ### For example, if the model predicted 1 out of 5 signs correctly, it's 20% accurate on these new images.
-csv_data = np.genfromtxt('GTSRB/Final_Test/GT-final_test.csv', \
-                         delimiter=';', names=True, dtype=None)
-label_indexed= [l[7] for l in csv_data]
-for i in range(0,20):
-    print(predicted_classes[i],"\t",label_indexed[i],"\t",\
-          sign_names[label_indexed[i]])
-    
 correct_predicts=0
-for predict,label in zip(predicted_classes,label_indexed):
-    if predict==label:
+for predict,file in zip(predicted_classes,files):
+    label = os.path.splitext(file)[0]
+    if predict==int(label):
         correct_predicts+=1
         
 print()
@@ -464,30 +454,10 @@ print("Total test: ",file_num)
 print("Accuracy: ",1.0* correct_predicts/file_num)
 ```
 
-    16 	 16 	 Vehicles over 3.5 metric tons prohibited
-    1 	 1 	 Speed limit (30km/h)
-    38 	 38 	 Keep right
-    33 	 33 	 Turn right ahead
-    11 	 11 	 Right-of-way at the next intersection
-    38 	 38 	 Keep right
-    18 	 18 	 General caution
-    12 	 12 	 Priority road
-    25 	 25 	 Road work
-    35 	 35 	 Ahead only
-    12 	 12 	 Priority road
-    7 	 7 	 Speed limit (100km/h)
-    23 	 23 	 Slippery road
-    8 	 7 	 Speed limit (100km/h)
-    4 	 4 	 Speed limit (70km/h)
-    9 	 9 	 No passing
-    21 	 21 	 Double curve
-    20 	 20 	 Dangerous curve to the right
-    11 	 27 	 Pedestrians
-    38 	 38 	 Keep right
     
-    Correct predict:  864
-    Total test:  1000
-    Accuracy:  0.864
+    Correct predict:  4
+    Total test:  6
+    Accuracy:  0.6666666666666666
 
 
 ### Output Top 5 Softmax Probabilities For Each Image
@@ -504,7 +474,7 @@ with tf.Session() as sess:
     top_k = sess.run(top_k_op, feed_dict={x: signs_norm, keep_prob: 1.0})
 prob_values, class_labels = top_k[0], top_k[1]
 
-for i in range(0,10):
+for i in range(0,file_num):
     title=''
     for certainty, label in zip(prob_values[i], class_labels[i]):
         title += sign_names[label] + ' ' + \
@@ -522,8 +492,9 @@ for i in range(0,10):
 ![png](docs/output_26_3.png)
 ![png](docs/output_26_4.png)
 ![png](docs/output_26_5.png)
-![png](docs/output_26_6.png)
-![png](docs/output_26_7.png)
-![png](docs/output_26_8.png)
-![png](docs/output_26_9.png)
 
+
+
+```python
+
+```
