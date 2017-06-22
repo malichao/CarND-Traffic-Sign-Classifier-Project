@@ -174,7 +174,7 @@ print(X_train.shape,y_train.shape,\
 
 
 ### Model Architecture
-
+I chose Lenet as the model to recognize the traffic sign. Lenet is a very simple but effective network that could run on normal CPU. It showed great performance in recognizing characters when it first came out. Traffic sign classification problem is very similar to character recognization as they both need to identify the features in the images.
 My final model consisted of the following layers:
 
 | Layer         		|     Description	        					| 
@@ -291,9 +291,7 @@ def eval_data(X_data, y_data):
 ```
 
 ### Train, Validate and Test the Model
-
-validation set accuracy of 0.961
-test set accuracy of 0.895
+I trained the model for 15 epochs and get a validation accuracy of 0.961 and test accuracy of 0.864. However, after this project was completed for a while and when I tried to plot the accuracy and loss curve and I found out that actually the accuracy dropped after the 8th epoch. Perhaps I should end the training early when it reached that point. But anyway, the curve shows that the achitecture is chosen correctly and it works as expected.
 
 
 ```python
@@ -358,7 +356,7 @@ with tf.Session() as sess:
 
 ## Step 3: Test a Model on New Images
 
-I also tested the model on [official GTSRB test set](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset#Downloads), which more than 10,000 pictures. I only selected the first 1000 pictures as it takes a long time to run through all the data. The prediction accuracy is 0.864.
+I found 6 German traffic sign pcitures online to test the model. Some of the pictures are hard to classify. For example, the 60km/h speed limit is very similar to 50km/h. The double curve sign is very similar to the slippery road sign. And the color of the turn right ahead sign is very close to the sky.
 
 ### Load and Output the Images
 
@@ -402,8 +400,6 @@ plt.show()
 
 
 ### Predict the Sign Type for Each Image
-
-
 ```python
 ### Run the predictions here and use the model to output the prediction for each image.
 ### Make sure to pre-process the images with the same pre-processing pipeline used earlier.
@@ -437,7 +433,7 @@ plt.show()
 
 
 ### Analyze Performance
-
+Comparing to the training and test data set, the model only has 0.66 accuracy on new images. The model misclassified the **double curve** sign for **slippery road**, and **priority road** for **speed limit 30km/h**. The first mistake is understandable because both signs are very similar to each other. But for the priority road, it has not so much common feature with a speed limit sign. One reason I could think of is that the priority road sign is not enough in the training set that the model is not familiar with it.
 
 ```python
 ### Calculate the accuracy for these 5 new images. 
@@ -493,7 +489,7 @@ for i in range(0,file_num):
 ![png](docs/output_26_4.png)
 ![png](docs/output_26_5.png)
 
-
+In the test above, the model shows high certainty on **pedestrian**, **turn right ahead**, and **keep right**. It shows similar certianties for 60km/h and 50km/h when it comes to the speed limit. In the two cases when it misclassifies, the correct prediction shows up in the top 5 candidates for one but doesn't show up at all in the other one.
 
 ```python
 
