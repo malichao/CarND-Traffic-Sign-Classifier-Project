@@ -293,6 +293,7 @@ def eval_data(X_data, y_data):
 ### Train, Validate and Test the Model
 I trained the model for 15 epochs and get a validation accuracy of 0.961 and test accuracy of 0.864. However, after this project was completed for a while and when I tried to plot the accuracy and loss curve and I found out that actually the accuracy dropped after the 8th epoch. Perhaps I should end the training early when it reached that point. But anyway, the curve shows that the achitecture is chosen correctly and it works as expected.
 
+![png](docs/loss_and_accuracy.png)
 
 ```python
 EPOCHS = 15
